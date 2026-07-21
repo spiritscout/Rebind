@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Rebind.Cli/Rebind.Cli.csproj" />
+  <Project Path="Rebind.Core.Tests/Rebind.Core.Tests.csproj" />
+  <Project Path="Rebind.Core/Rebind.Core.csproj" />
+</Solution>
