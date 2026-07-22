@@ -5,9 +5,17 @@ namespace Rebind.Core.Reading;
 
 public class EpubReader
 {
-    public string FindOpfPath(ZipArchive archive)
+    // The EPUB this specific reader is bound to, for the lifetime of the object.
+    // Held once so methods don't each need it passed in.
+    private readonly ZipArchive _archive;
+    
+    public EpubReader(ZipArchive archive)
     {
-        var containerEntry = archive.GetEntry("META-INF/container.xml");
+        _archive = archive;
+    }
+    public string FindOpfPath()
+    {
+        var containerEntry = _archive.GetEntry("META-INF/container.xml");
         if (containerEntry is null)
             throw new InvalidOperationException("Not a valid EPUB: META-INF/container.xml is missing");
 

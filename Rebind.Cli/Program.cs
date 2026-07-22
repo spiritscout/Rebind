@@ -80,6 +80,6 @@ string path = args[0];
 using ZipArchive archive = ZipFile.OpenRead(path);
 
 
-var reader = new EpubReader();
-var epubOpfPath = reader.FindOpfPath(archive);
+var reader = new EpubReader(archive);
+var epubOpfPath = reader.FindOpfPath();
 Console.WriteLine(epubOpfPath);
