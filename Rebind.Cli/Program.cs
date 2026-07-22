@@ -83,3 +83,11 @@ using ZipArchive archive = ZipFile.OpenRead(path);
 var reader = new EpubReader(archive);
 var epubOpfPath = reader.FindOpfPath();
 Console.WriteLine(epubOpfPath);
+
+var readingOrder = reader.GetReadingOrder(epubOpfPath);
+
+Console.WriteLine("\nReading order:");
+foreach (var filePath in readingOrder)
+{
+    Console.WriteLine($"  {filePath}");
+}
