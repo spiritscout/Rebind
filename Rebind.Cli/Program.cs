@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+﻿/* 
+using System.IO.Compression;
 
 if (args.Length == 0)
 {
@@ -62,3 +63,23 @@ else
     Console.WriteLine($"=== {target.FullName} (up to {maxChars} chars) ===");
     Console.WriteLine(text[..Math.Min(maxChars, text.Length)]);
 }
+
+*/
+
+using System.IO.Compression;
+using Rebind.Core.Reading;
+
+if (args.Length == 0)
+{
+    Console.WriteLine("Usage: dotnet run --project Rebind.Cli -- <path-to-epub>");
+    return;
+}
+
+string path = args[0];
+
+using ZipArchive archive = ZipFile.OpenRead(path);
+
+
+var reader = new EpubReader();
+var epubOpfPath = reader.FindOpfPath(archive);
+Console.WriteLine(epubOpfPath);
