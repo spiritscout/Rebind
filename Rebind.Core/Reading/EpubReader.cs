@@ -36,27 +36,10 @@ public class EpubReader
 
     public List<string> GetReadingOrder(string opfPath)
     {
-        var opfEntry = _archive.GetEntry(opfPath);
-        if (opfEntry is null)
-            throw new InvalidOperationException($"OPF not found in archive at path: {opfPath}");
-
-        XDocument doc;
-        using (var stream = opfEntry.Open())
-        {
-            doc = XDocument.Load(stream);
-        }
+        var (doc, idToHref) = LoadOpf(opfPath);
 
         // OPF elements live in this namespace; needed for every element query below.
         XNamespace opf = "http://www.idpf.org/2007/opf";
-
-        var manifestItems = doc.Descendants(opf + "item");
-
-        // Map each manifest id to its file path (href), so the spine's
-        // id references can be resolved to actual files. ToDict(key, value)
-        var idToHref = manifestItems.ToDictionary(
-            item => item.Attribute("id")!.Value,
-            item => item.Attribute("href")!.Value
-        );
 
         // The spine lists item ids in reading order; preserve that order.
         var spineIds = doc.Descendants(opf + "itemref")
@@ -71,29 +54,13 @@ public class EpubReader
             readingOrder.Add(ResolveHref(opfPath, idToHref[id]));
         }
         return readingOrder;
-        
     }
 
-    // TODO - duplication, re-loads OPF, already done above
     public Dictionary<string, string> GetNavTitles(string opfPath)
     {
-        var opfEntry = _archive.GetEntry(opfPath);
-        if (opfEntry is null)
-            throw new InvalidOperationException($"OPF not found in archive at path: {opfPath}");
-
-        XDocument doc;
-        using (var stream = opfEntry.Open())
-        {
-            doc = XDocument.Load(stream);
-        }
+        var (doc, idToHref) = LoadOpf(opfPath);
 
         XNamespace opf = "http://www.idpf.org/2007/opf";
-
-        var manifestItems = doc.Descendants(opf + "item");
-        var idToHref = manifestItems.ToDictionary(
-            item => item.Attribute("id")!.Value,
-            item => item.Attribute("href")!.Value
-        );
 
         // The spine's toc attribute names the manifest id of the nav document.
         var spine = doc.Descendants(opf + "spine").First();
@@ -139,6 +106,35 @@ public class EpubReader
         }
 
         return navTitles;
+    }
+
+    // Loads the OPF and builds the manifest id -> href lookup.
+    // Both public methods need these, so they're built in one place.
+    private (XDocument Doc, Dictionary<string, string> IdToHref) LoadOpf(string opfPath)
+    {
+        var opfEntry = _archive.GetEntry(opfPath);
+        if (opfEntry is null)
+            throw new InvalidOperationException($"OPF not found in archive at path: {opfPath}");
+
+        XDocument doc;
+        using (var stream = opfEntry.Open())
+        {
+            doc = XDocument.Load(stream);
+        }
+
+        // OPF elements live in this namespace; needed for every element query below.
+        XNamespace opf = "http://www.idpf.org/2007/opf";
+
+        var manifestItems = doc.Descendants(opf + "item");
+
+        // Map each manifest id to its file path (href), so the spine's
+        // id references can be resolved to actual files. ToDict(key, value)
+        var idToHref = manifestItems.ToDictionary(
+            item => item.Attribute("id")!.Value,
+            item => item.Attribute("href")!.Value
+        );
+
+        return (doc, idToHref);
     }
 
     // Hrefs inside the OPF are relative to the OPF's own folder, not the
