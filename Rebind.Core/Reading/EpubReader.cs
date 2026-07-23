@@ -68,9 +68,30 @@ public class EpubReader
         var readingOrder = new List<string>();
         foreach (var id in spineIds)
         {
-            readingOrder.Add(idToHref[id]);
+            readingOrder.Add(ResolveHref(opfPath, idToHref[id]));
         }
         return readingOrder;
         
+    }
+
+    // TODO - duplication, re-loads OPF, already done above
+    public Dictionary<string, string> GetNavTitles(string opfPath)
+    {
+        throw new NotImplementedException();
+    }
+
+    // Hrefs inside the OPF are relative to the OPF's own folder, not the
+    // archive root. This resolves them to full archive paths.
+    // TODO - "../" not handled
+    private static string ResolveHref(string opfPath, string href)
+    {
+        var opfDirectory = Path.GetDirectoryName(opfPath);
+
+        // OPF at the archive root: the href is already the full path.
+        if (string.IsNullOrEmpty(opfDirectory))
+            return href;
+
+        // Zip paths always use forward slashes, so don't use Path.Combine here.
+        return $"{opfDirectory.Replace('\\', '/')}/{href}";
     }
 }
