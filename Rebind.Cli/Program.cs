@@ -88,9 +88,17 @@ var readingOrder = reader.GetReadingOrder(epubOpfPath);
 
 var navTitles = reader.GetNavTitles(epubOpfPath);
 
-Console.WriteLine("\nReading order:");
+// Pair each spine path with its nav title, if it has one.
+var entries = new List<SpineEntry>();
 foreach (var filePath in readingOrder)
 {
-    var title = navTitles.TryGetValue(filePath, out var found) ? found : "(no title)";
-    Console.WriteLine($"  {title,-40} {filePath}");
+    var title = navTitles.TryGetValue(filePath, out var found) ? found : null;
+    entries.Add(new SpineEntry(filePath, title));
+}
+
+Console.WriteLine("\nReading order:");
+foreach (var entry in entries)
+{
+    var display = entry.Title ?? "(no title)";
+    Console.WriteLine($"  {display,-40} {entry.Path}");
 }
