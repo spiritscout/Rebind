@@ -77,7 +77,68 @@ public class EpubReader
     // TODO - duplication, re-loads OPF, already done above
     public Dictionary<string, string> GetNavTitles(string opfPath)
     {
-        throw new NotImplementedException();
+        var opfEntry = _archive.GetEntry(opfPath);
+        if (opfEntry is null)
+            throw new InvalidOperationException($"OPF not found in archive at path: {opfPath}");
+
+        XDocument doc;
+        using (var stream = opfEntry.Open())
+        {
+            doc = XDocument.Load(stream);
+        }
+
+        XNamespace opf = "http://www.idpf.org/2007/opf";
+
+        var manifestItems = doc.Descendants(opf + "item");
+        var idToHref = manifestItems.ToDictionary(
+            item => item.Attribute("id")!.Value,
+            item => item.Attribute("href")!.Value
+        );
+
+        // The spine's toc attribute names the manifest id of the nav document.
+        var spine = doc.Descendants(opf + "spine").First();
+        var tocId = spine.Attribute("toc")!.Value;
+
+        // turns id into full nav path
+        var navPath = ResolveHref(opfPath, idToHref[tocId]);
+
+        // load nav file
+        var navEntry = _archive.GetEntry(navPath);
+        if (navEntry is null)
+            throw new InvalidOperationException($"Nav document not found in archive at path: {navPath}");
+
+        XDocument navDoc;
+        using (var stream = navEntry.Open())
+        {
+            navDoc = XDocument.Load(stream);
+        }
+
+        // NCX has its own namespace, distinct from the OPF's.
+        XNamespace ncx = "http://www.daisy.org/z3986/2005/ncx/";
+
+        // walk nav points and extract them at any depth
+        var navTitles = new Dictionary<string, string>();
+
+        foreach (var navPoint in navDoc.Descendants(ncx + "navPoint"))
+        {
+            // pull out title and src, 2 hops to descend from navpoint *then* read or extract, respectively
+            var title = navPoint.Element(ncx + "navLabel")!.Element(ncx + "text")!.Value;
+            var src = navPoint.Element(ncx + "content")!.Attribute("src")!.Value;
+
+            // Nav src may carry an anchor (file.html#section); spine needs plain paths.
+            var hashIndex = src.IndexOf('#');
+            if (hashIndex >= 0)
+                src = src[..hashIndex];
+
+            // get full archive path of src and add it to navTitles
+            var srcPath = ResolveHref(opfPath, src);
+            if (!navTitles.ContainsKey(srcPath))
+            {
+                navTitles.Add(srcPath, title);
+            }
+        }
+
+        return navTitles;
     }
 
     // Hrefs inside the OPF are relative to the OPF's own folder, not the

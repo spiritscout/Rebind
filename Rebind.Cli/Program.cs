@@ -86,8 +86,11 @@ Console.WriteLine(epubOpfPath);
 
 var readingOrder = reader.GetReadingOrder(epubOpfPath);
 
+var navTitles = reader.GetNavTitles(epubOpfPath);
+
 Console.WriteLine("\nReading order:");
 foreach (var filePath in readingOrder)
 {
-    Console.WriteLine($"  {filePath}");
+    var title = navTitles.TryGetValue(filePath, out var found) ? found : "(no title)";
+    Console.WriteLine($"  {title,-40} {filePath}");
 }
