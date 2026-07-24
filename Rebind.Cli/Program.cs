@@ -99,11 +99,20 @@ foreach (var filePath in readingOrder)
 var filter = new ContentFilter();
 var filtered = filter.Filter(entries);
 
-Console.WriteLine($"\nReading order ({filtered.Count} of {entries.Count} entries kept):");
+var (kept, dropped) = filter.Filter(entries);
 
-Console.WriteLine("\nReading order:");
-foreach (var entry in filtered)
+Console.WriteLine($"\nReading order ({kept.Count} of {entries.Count} entries kept):");
+foreach (var entry in kept)
 {
     var display = entry.Title ?? "(no title)";
     Console.WriteLine($"  {display,-40} {entry.Path}");
+}
+
+if (dropped.Count > 0)
+{
+    Console.WriteLine("\nDropped:");
+    foreach (var entry in dropped)
+    {
+        Console.WriteLine($"  {entry.Title ?? "(no title)"}");
+    }
 }
