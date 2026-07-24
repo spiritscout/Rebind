@@ -96,8 +96,13 @@ foreach (var filePath in readingOrder)
     entries.Add(new SpineEntry(filePath, title));
 }
 
+var filter = new ContentFilter();
+var filtered = filter.Filter(entries);
+
+Console.WriteLine($"\nReading order ({filtered.Count} of {entries.Count} entries kept):");
+
 Console.WriteLine("\nReading order:");
-foreach (var entry in entries)
+foreach (var entry in filtered)
 {
     var display = entry.Title ?? "(no title)";
     Console.WriteLine($"  {display,-40} {entry.Path}");
