@@ -24,8 +24,6 @@ public class ContentFilter
         "copyright",
         "contents",
         "imprint",
-        "uncopyright",  // not covered by "copyright" once word boundaries apply
-        "colophon",
         "praise for",
         "preview of",
         "excerpt from",

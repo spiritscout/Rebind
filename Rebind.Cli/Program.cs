@@ -1,4 +1,7 @@
 ﻿/* 
+
+###LEGACY EXPLORATION SCRIPT###
+
 using System.IO.Compression;
 
 if (args.Length == 0)
