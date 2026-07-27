@@ -10,6 +10,8 @@ public class ContentFilter
     [
         "also by",
         "about the author",
+        "colophon",
+        "uncopyright",
     ];
 
     // Front matter only. Applied within the pre-block window, or from the
@@ -36,7 +38,7 @@ public class ContentFilter
 
         // Everything before this index is a front-matter candidate.
         // With no block detection, the whole list is candidate
-        var frontRegionEnd = entries.Count;
+        var frontRegionEnd = FindBlockStart(entries) ?? entries.Count;
 
         for (int i = 0; i < entries.Count; i++)
         {
@@ -82,6 +84,103 @@ public class ContentFilter
         }
 
         return false;
+    }
+
+    // All Arabic numbers in the string, in order. "c01_r1" -> [1, 1].
+    // long, not int - filenames can embed a 13-digit ISBN that overflows int.
+    private static List<long> ExtractNumbers(string text)
+    {
+        var numbers = new List<long>();
+        foreach (Match match in Regex.Matches(text, @"\d+"))
+        {
+            numbers.Add(long.Parse(match.Value));
+        }
+        return numbers;
+    }
+
+    // Longest stretch of values each exactly one more than the last.
+    // Returns the run's length and where it starts.
+    private static (int RunLength, int StartIndex) LongestConsecutiveRun(List<long> numbers)
+    {
+        if (numbers.Count == 0)
+            return (0, 0);
+
+        int bestLength = 1, bestStart = 0;
+        int currentLength = 1, currentStart = 0;
+
+        for (int i = 1; i < numbers.Count; i++)
+        {
+            if (numbers[i] == numbers[i - 1] + 1)
+            {
+                currentLength++;
+            }
+            else
+            {
+                currentLength = 1;
+                currentStart = i;
+            }
+
+            if (currentLength > bestLength)
+            {
+                bestLength = currentLength;
+                bestStart = currentStart;
+            }
+        }
+
+        return (bestLength, bestStart);
+    }
+
+    // The chapter block: longest consecutive numeric run, from titles first,
+    // then filenames. Returns the entry index where it starts, or null.
+    // Titles before filenames is load-bearing: ASOS/BUTTERFLY filenames would
+    // yield a spurious full-length run, avoided only because titles match first.
+    private int? FindBlockStart(List<SpineEntry> entries)
+    {
+        var fromTitles = DetectBlock(entries, e => e.Title ?? "");
+        if (fromTitles is not null)
+            return fromTitles;
+
+        return DetectBlock(entries, e => e.Path);
+    }
+
+    // Runs block detection over one text source (title or path).
+    private int? DetectBlock(List<SpineEntry> entries, Func<SpineEntry, string> textOf)
+    {
+        // Numbers per entry, from the chosen source.
+        var perEntry = entries.Select(e => ExtractNumbers(textOf(e))).ToList();
+
+        // Widest row tells us how many columns (number positions) to test.
+        int maxColumns = perEntry.Count == 0 ? 0 : perEntry.Max(nums => nums.Count);
+
+        int? bestStart = null;
+        int bestLength = 0;
+
+        for (int col = 0; col < maxColumns; col++)
+        {
+            // Gather this column: (real entry index, the number at this position).
+            var entryIndices = new List<int>();
+            var columnNumbers = new List<long>();
+            for (int i = 0; i < perEntry.Count; i++)
+            {
+                if (col < perEntry[i].Count)
+                {
+                    entryIndices.Add(i);
+                    columnNumbers.Add(perEntry[i][col]);
+                }
+            }
+
+            var (runLength, runStart) = LongestConsecutiveRun(columnNumbers);
+
+            //  TODO inline 5 declared, may require named const later
+            if (runLength >= 5 && runLength > bestLength)
+            {
+                bestLength = runLength;
+                // Map the run's position back to the real entry index.
+                bestStart = entryIndices[runStart];
+            }
+        }
+
+        return bestStart;
     }
 
 }
