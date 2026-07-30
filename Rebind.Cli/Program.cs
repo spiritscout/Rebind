@@ -71,6 +71,8 @@ else
 
 using System.IO.Compression;
 using Rebind.Core.Reading;
+using Rebind.Core;
+
 
 if (args.Length == 0)
 {
@@ -91,7 +93,7 @@ var readingOrder = reader.GetReadingOrder(epubOpfPath);
 
 var navTitles = reader.GetNavTitles(epubOpfPath);
 
-// Pair each spine path with its nav title, if it has one.
+// Pair each spine path with its nav title, if it has one
 var entries = new List<SpineEntry>();
 foreach (var filePath in readingOrder)
 {
@@ -118,4 +120,18 @@ if (dropped.Count > 0)
     {
         Console.WriteLine($"  {entry.Title ?? "(no title)"}");
     }
+}
+
+// Slice one test - read first kept chapter, see what comes out
+var chapterReader = new ChapterReader(archive);
+var firstChapter = chapterReader.Read(kept[1]);
+
+Console.WriteLine($"\nFirst chapter: {firstChapter.Title ?? "(no title)"}");
+Console.WriteLine($"Blocks: {firstChapter.Content.Count}");
+
+// Print first couple of paragraphs inner HTML to eyeball output.
+foreach (var block in firstChapter.Content.Skip(2).Take(3))
+{
+    if (block is Paragraph paragraph)
+        Console.WriteLine($"\n  {paragraph.Html}");
 }
