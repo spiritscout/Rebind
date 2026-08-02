@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using AngleSharp.Html.Parser;
+using AngleSharp.Dom;
 
 namespace Rebind.Core.Reading;
 
@@ -41,6 +42,13 @@ public class ChapterReader
         var blocks = new List<Block>();
         foreach (var p in document.QuerySelectorAll("p"))
         {
+            var imageBlocks = RecogniseImage(p);
+            if (imageBlocks is not null)
+            {
+                blocks.AddRange(imageBlocks);
+                continue;
+            }
+
             blocks.Add(new Paragraph(p.InnerHtml));
         }
 
@@ -48,5 +56,24 @@ public class ChapterReader
         // preference is deferred to the Heading recogniser, which can't run until
         // headings are being parsed anyway
         return new Chapter(entry.Title, blocks);
+    }
+
+    // Recognises an image-only paragraph: one or more <img> and no prose text.
+    // Returns one BookImage per image, or null if this <p> is not image-only,
+    // in which case the caller treats it as an ordinary Paragraph.
+    private static List<Block>? RecogniseImage(IElement p)
+    {
+        var images = p.QuerySelectorAll("img");
+        if (images.Length == 0 || !string.IsNullOrWhiteSpace(p.TextContent))
+            return null;
+
+        var blocks = new List<Block>();
+        foreach (var img in images)
+        {
+            var src = img.GetAttribute("src") ?? "";
+            var alt = img.GetAttribute("alt");
+            blocks.Add(new BookImage(src, alt));
+        }
+        return blocks;
     }
 }

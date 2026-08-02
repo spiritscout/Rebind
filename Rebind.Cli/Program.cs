@@ -129,9 +129,19 @@ var firstChapter = chapterReader.Read(kept[1]);
 Console.WriteLine($"\nFirst chapter: {firstChapter.Title ?? "(no title)"}");
 Console.WriteLine($"Blocks: {firstChapter.Content.Count}");
 
-// Print first couple of paragraphs inner HTML to eyeball output.
-foreach (var block in firstChapter.Content.Skip(2).Take(3))
+// Show block types so recogniser output is visible, not just paragraphs.
+foreach (var block in firstChapter.Content.Take(4))
 {
-    if (block is Paragraph paragraph)
-        Console.WriteLine($"\n  {paragraph.Html}");
+    switch (block)
+    {
+        case BookImage image:
+            Console.WriteLine($"\n  [BookImage] src={image.Source} alt={image.Alt ?? "(none)"}");
+            break;
+        case Paragraph paragraph:
+            Console.WriteLine($"\n  [Paragraph] {paragraph.Html}");
+            break;
+        default:
+            Console.WriteLine($"\n  [{block.GetType().Name}]");
+            break;
+    }
 }
