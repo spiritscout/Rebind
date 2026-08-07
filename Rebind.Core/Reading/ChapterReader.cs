@@ -40,16 +40,16 @@ public class ChapterReader
         // renderer supply the <p> wrapper later. The source's own <p class="...">
         // cruft is dropped for free as a result
         var blocks = new List<Block>();
-        foreach (var p in document.QuerySelectorAll("p"))
+        foreach (var element in document.QuerySelectorAll("p, h1, h2, h3, h4, h5, h6"))
         {
-            var imageBlocks = RecogniseImage(p);
+            var imageBlocks = RecogniseImage(element);
             if (imageBlocks is not null)
             {
                 blocks.AddRange(imageBlocks);
                 continue;
             }
 
-            blocks.Add(new Paragraph(p.InnerHtml));
+            blocks.Add(new Paragraph(element.InnerHtml));
         }
 
         // Nav title used directly for slice one. In-file-heading-vs-nav-title
