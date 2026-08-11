@@ -27,6 +27,7 @@ public class ContentFilter
         "praise for",
         "preview of",
         "excerpt from",
+        "dedication",
     ];
 
     public (List<SpineEntry> Kept, List<SpineEntry> Dropped) Filter(List<SpineEntry> entries)
