@@ -13,6 +13,14 @@ public class ChapterReader
         _archive = archive;
     }
 
+    private static readonly Dictionary<string, int> HeadingClassLevels = new()
+    {
+        ["pt"] = 1,
+        ["ct"] = 2,
+        ["chapter-title"] = 2,
+        ["heading"] = 2,
+    };
+
     public Chapter Read(SpineEntry entry)
     {
         // Locate the content file. A null here is the missing-spine-target case
