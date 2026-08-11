@@ -84,4 +84,13 @@ public class ChapterReader
         }
         return blocks;
     }
+
+    // Normalises heading text
+    private static string CleanHeadingText(IElement element)
+    {
+        var text = element.TextContent.Replace('\u00A0', ' ');
+        var parts = text.Split(default(char[]), StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" ", parts);
+    }
+
 }
