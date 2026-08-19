@@ -85,6 +85,14 @@ public class ChapterReader
         return blocks;
     }
 
+    // Heading text, normalised. TextContent unwraps any inner <a>/<abbr>/ <strong>/<em> to plain text
+    private static string CleanHeadingText(IElement element)
+    {
+        var text = element.TextContent.Replace('\u00A0', ' ');
+        var parts = text.Split(default(char[]), StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" ", parts);
+    }
+
     // Normalises heading text
     private static string CleanHeadingText(IElement element)
     {
